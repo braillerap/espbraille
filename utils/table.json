@@ -1,0 +1,17 @@
+{
+    "base":"webfiles",
+    "f2c": [
+        "**"
+    ],
+    "srcdir":"../react/build/",
+    "dstdir":"../main/react/",
+
+    "db_header":"../main/react/reactdatabase.h",
+    "db_implement":"../main/react/reactdatabase.c",
+    "db_type":"react_database",
+    "db_name":"react_datafiles",
+    "db_table_filter":[
+        "**"
+    ]
+    
+}
