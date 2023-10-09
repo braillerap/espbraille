@@ -17,8 +17,10 @@ You can configure project option with :
 >idf.py menuconfig
 
 available options are :
-SSID : Wifi network SSID for AP
-PASSWORD: Wifi password
+
+-SSID : Wifi network SSID for AP
+
+-PASSWORD: Wifi password
 
 ## building firmware
 
