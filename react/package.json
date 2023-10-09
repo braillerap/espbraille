@@ -23,7 +23,8 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "ignorePatterns": ["src/liblouisreact.mjs"]
   },
   "browserslist": {
     "production": [

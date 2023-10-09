@@ -8,8 +8,8 @@
 #define	__REACTDATABASE_H_H
 
 
-#define	REACT_DATABASE_NBR	14
-#define	REACT_DATAFILES_INFO_NBR	14
+#define	REACT_DATABASE_NBR	15
+#define	REACT_DATAFILES_INFO_NBR	15
 
 
 typedef struct _react_database{

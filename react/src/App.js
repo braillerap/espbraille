@@ -5,6 +5,7 @@ import AppOption from "./pages/components/AppOption";
 import TextInput from "./pages/textinput";
 import Layout from './Layout'
 
+
 import './App.css';
 
 
@@ -20,9 +21,11 @@ class App extends Component {
               srctxt : '',
               options : AppOption,
               nbline: 20,
-              nbcol:24
+              nbcol:24,
+              
           }
       );
+      
 
       this.SetText = this.SetText.bind(this);
       this.SetNbLine = this.SetNbLine.bind(this);
@@ -30,6 +33,7 @@ class App extends Component {
       
       this.SetOption = this.SetOption.bind(this);
   }
+ 
   
   SetText (str)
   {
@@ -48,6 +52,7 @@ class App extends Component {
     this.setState ({option:opt});
     
   }
+  
   render ()
   {
     return (

@@ -3,8 +3,20 @@ import BrailleTranslatorFactory from '../modules/BrailleTranslatorFactory';
 import BraillePaginator from '../modules/BraillePaginator';
 import BrailleToGeometry from '../modules/BrailleToGeometry';
 import GeomToGCode from '../modules/GeomToGCode';
+
+import libLouis from '../WrapLibLouisReact';
+import createModule from "../liblouisreact.mjs"; // eslint-disable-line
+
 import '../App.css';
 
+function  braille_info (fname, desc, lang, region, flags) {
+    this.fname =fname;
+    this.desc = desc;
+    this.lang = lang;
+    this.region = region;
+    this.flags = flags;
+  }
+  
 
 class TextInput extends React.Component {
     
@@ -20,21 +32,65 @@ class TextInput extends React.Component {
           lastack:"",
           PrintIdx: 0,
           PrintedIdx:0,
-          gcode:[]
+          gcode:[],
+          brailleinfo:[],
+          brailletbl:3
         };
-        
+        this.liblouis = new libLouis ();
         this.handleChange = this.handleChange.bind(this);
         
         this.handleprintws = this.handleprintws.bind(this);
         this.printws_automat = this.printws_automat.bind(this);
         this.CheckTimeout = this.CheckTimeout.bind (this);
-        
+        this.handleChangeBraille = this.handleChangeBraille.bind(this);
         this.realidx = 0;
         this.pending = false;
         this.lastws_event = performance.now();
         
     }
-   
+    
+    componentDidMount ()
+    {
+      
+      createModule().then((Module) => {
+        // need to use callback form (() => function) to ensure that `add` is set to the function
+        // if you use setX(myModule.cwrap(...)) then React will try to set newX = myModule.cwrap(currentX), which is wrong
+        
+        this.liblouis.init (Module);
+        
+        if (this.liblouis.isInit())
+        {
+          let nb = this.liblouis.get_table_nbr();
+          console.log ("find " + nb.toString() + " Braille tables")
+       
+          let brtable = [];
+          let louis = this.liblouis;
+          let nbr = louis.get_table_nbr();
+          for (let i = 0; i < nbr; i++)
+          {
+            let description = louis.get_table_description(i);
+            
+            //console.log (description + " " + typeof(flags) + " " + flags.toString(16));
+            let br = new braille_info(
+              louis.get_table_fname(i), 
+              description,
+              louis.get_table_lang(i), 
+              louis.get_table_region(i),
+              louis.get_table_flags (i)
+            );
+            brtable.push (
+              br
+            );
+            //console.log (this.props.glouis().get_table_fname(i));
+          }
+          this.setState({brailleinfo:brtable})
+       
+        }
+      }).catch ((error)=> {
+        console.log("catch:" + error.toString());
+      });
+      
+    }
     CheckTimeout()
     {
 
@@ -47,9 +103,11 @@ class TextInput extends React.Component {
     
     buildgcode ()    
     {
+        if (! this.liblouis.isInit())
+            return;
         // build Braille GCODE for current page
         let f = new BrailleTranslatorFactory();
-        let Braille = f.getTranslator("TBFR2007", "", "");
+        let Braille = f.getTranslator("LOUIS", this.liblouis, this.state.brailletbl);
         Braille.setSrc(this.state.txt);
         Braille.translate();
         let geom = new BrailleToGeometry();
@@ -59,7 +117,7 @@ class TextInput extends React.Component {
         paginator.setrow(this.props.options.nbline);
         paginator.setSrcLines (Braille.getBrailleLines());
         paginator.Update();
-        console.log (Braille.getBrailleLines());
+        console.log ("braille " + Braille.getBrailleLines().toString());
         geom.setPaddingY (Braille.getLinePadding ());
         //console.log ("padding " + this.Braille.getLinePadding ());
         let ptcloud = geom.BraillePageToGeom(paginator.getPage(0), 1, 1);
@@ -146,7 +204,7 @@ class TextInput extends React.Component {
                 }
                 if (data.hasOwnProperty("status"))
                 {
-                    if (data["status"] == "ERROR")
+                    if (data["status"] === "ERROR")
                         this.ws.close();
                 }
                 
@@ -164,7 +222,7 @@ class TextInput extends React.Component {
                     }
                     if (data.hasOwnProperty("status"))
                     {
-                        if (data["status"] == "ERROR")
+                        if (data["status"] === "ERROR")
                             this.ws.close();
                     }
                     
@@ -222,7 +280,47 @@ class TextInput extends React.Component {
         this.setState({txt: event.target.value});
         this.props.textcb (event.target.value);
     }
-    
+    handleChangeBraille(event)
+    {
+      
+        this.setState({brailletbl:event.target.value});  
+    }
+    render_braille_lang ()
+    {
+      if (this.state.brailleinfo.length === 0)
+      {
+        return (<p aria-hidden='true'>Loading..." </p>)
+      }
+      let selectedtable ="vide";
+      if (this.state.brailletbl < this.state.brailleinfo.length)
+        selectedtable = this.state.brailleinfo[this.state.brailletbl].desc;
+      return (
+        <>
+        
+        <label htmlFor='combobraille'>
+          Braille translation
+        </label>
+        <select className='selectbraille' 
+            onChange={this.handleChangeBraille}  
+            value={this.state.brailletbl} 
+            name="combobraille"
+            id="combobraille"
+        >
+        
+        {this.state.brailleinfo.map ((item, index)=> {
+                 if (index === this.props.options.brailletbl)
+                   return (<option  aria-selected='true' key={index} value={index}>{item.lang + " - " + item.desc }</option>);
+                 else
+                   return (<option  aria-selected='false' key={index} value={index}>{item.lang + " - " + item.desc }</option>);
+              })
+             }
+                   
+        </select>
+
+        </>
+       );
+
+    }
     render ()
     {
         const ncols = parseInt(this.props.options.nbcol);
@@ -242,6 +340,7 @@ class TextInput extends React.Component {
         else
             return (
                 <>
+                <h1>BrailleRAP</h1>
             <textarea  
                         value={this.state.txt} 
                         onChange={this.handleChange} 
@@ -249,8 +348,8 @@ class TextInput extends React.Component {
                         cols={ncols} 
                         
                         >{this.state.txt}</textarea>
-                
-                <button onClick={this.handleprintws}>Embossage</button>
+                {this.render_braille_lang()}
+                <button onClick={this.handleprintws}>Print</button>
                 
                 </>
             );

@@ -13,17 +13,35 @@
   }
 }
 button {
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  font-size: 1em;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 1rem;
+  margin-right: 0.5rem;
+  margin-left:0.5rem;
 }
 textarea {
-  margin: 1em;
-  font-size: 1.25em;
+  margin: 0.5rem;
+  font-size: 1rem;
 }
 p {
-  margin: 1em;
-  font-size: 2em;
+  margin-top: 0.25rem;
+  font-size: 1rem;
+}
+label {
+  margin-top:0.25rem;
+  margin-bottom:0;
+  
+}
+h1
+{
+  font-size:1.25rem;
+}
+select 
+{
+  margin-top: 0;
+  margin-bottom:0.5rem;
+  margin-right: 0.5rem;
+  margin-left:0.5rem;
 }
 .App-header {
   background-color: #282c34;
