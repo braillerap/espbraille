@@ -3,7 +3,7 @@ import BrailleTranslatorFactory from '../modules/BrailleTranslatorFactory';
 import BraillePaginator from '../modules/BraillePaginator';
 import BrailleToGeometry from '../modules/BrailleToGeometry';
 import GeomToGCode from '../modules/GeomToGCode';
-
+import waitanim from './833.gif'
 import libLouis from '../WrapLibLouisReact';
 import createModule from "../liblouisreact.mjs"; // eslint-disable-line
 
@@ -289,7 +289,12 @@ class TextInput extends React.Component {
     {
       if (this.state.brailleinfo.length === 0)
       {
-        return (<p aria-hidden='true'>Loading..." </p>)
+        return (
+            <div className='imgcontainer'>
+                <p aria-hidden='true'>Loading ... </p>
+                <img className='imgload'  src={waitanim} alt="" />
+            </div>
+        )
       }
       let selectedtable ="vide";
       if (this.state.brailletbl < this.state.brailleinfo.length)
