@@ -24,11 +24,11 @@
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
 
-#define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
-#define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
-#define EXAMPLE_ESP_MAXIMUM_RETRY  8
-#define EXAMPLE_ESP_MAX_STA_CONN     CONFIG_ESP_MAX_STA_CONN
-#define EXAMPLE_ESP_MODE            0
+#define WIFI_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
+#define WIFI_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
+#define WIFI_ESP_MAXIMUM_RETRY  8
+#define WIFI_ESP_MAX_STA_CONN     CONFIG_ESP_MAX_STA_CONN
+#define WIFI_ESP_MODE            0
 
 #define CONFIG_ESP_WPA3_SAE_PWE_HUNT_AND_PECK 1
 
@@ -77,7 +77,7 @@ static void wifi_event_handler_sta(void* arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
+        if (s_retry_num < WIFI_ESP_MAXIMUM_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
             ESP_LOGI(TAG, "retry to connect to the AP");
@@ -125,8 +125,8 @@ void wifi_init_sta(void)
 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .password = EXAMPLE_ESP_WIFI_PASS,
+            .ssid = WIFI_ESP_WIFI_SSID,
+            .password = WIFI_ESP_WIFI_PASS,
             /* Authmode threshold resets to WPA2 as default if password matches WPA2 standards (pasword len => 8).
              * If you want to connect the device to deprecated WEP/WPA networks, Please set the threshold value
              * to WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK and set the password with length and format matching to
@@ -156,10 +156,10 @@ void wifi_init_sta(void)
      * happened. */
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 WIFI_ESP_WIFI_SSID, WIFI_ESP_WIFI_PASS);
     } else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
-                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+                 WIFI_ESP_WIFI_SSID, WIFI_ESP_WIFI_PASS);
     } else {
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }
@@ -189,14 +189,14 @@ static void wifi_init_softap(void)
 
     wifi_config_t wifi_config = {
         .ap = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .ssid_len = strlen(EXAMPLE_ESP_WIFI_SSID),
-            .password = EXAMPLE_ESP_WIFI_PASS,
-            .max_connection = EXAMPLE_ESP_MAX_STA_CONN,
+            .ssid = WIFI_ESP_WIFI_SSID,
+            .ssid_len = strlen(WIFI_ESP_WIFI_SSID),
+            .password = WIFI_ESP_WIFI_PASS,
+            .max_connection = WIFI_ESP_MAX_STA_CONN,
             .authmode = WIFI_AUTH_WPA_WPA2_PSK
         },
     };
-    if (strlen(EXAMPLE_ESP_WIFI_PASS) == 0) {
+    if (strlen(WIFI_ESP_WIFI_PASS) == 0) {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
     }
 
@@ -212,12 +212,12 @@ static void wifi_init_softap(void)
     ESP_LOGI(TAG, "Set up softAP with IP: %s", ip_addr);
 
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:'%s' password:'%s'",
-             EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+             WIFI_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
 }
 
 void start_wifi(void)
 {
-    #if EXAMPLE_ESP_MODE == 1
+    #if WIFI_ESP_MODE == 1
     ESP_LOGI(TAG, "Init STATION mode");
     //esp_netif_create_default_wifi_sta();
     wifi_init_sta();
