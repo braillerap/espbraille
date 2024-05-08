@@ -1,4 +1,4 @@
-menu "Example Configuration"
+menu "ESPBraille WIFI Configuration"
 
     config ESP_WIFI_SSID
         string "SoftAP SSID"
@@ -17,4 +17,10 @@ menu "Example Configuration"
         default 4
         help
             Max number of the STA connects to AP.
+
+    config ESP_WIFI_MODE
+        int "Wifi mode"
+        default 0
+        help
+            0 = Wifi as Access Point (AP), 1 Wifi as STATION (STA).            
 endmenu

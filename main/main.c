@@ -1,10 +1,5 @@
-/* Captive Portal Example
+/* 
 
-    This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-    Unless required by applicable law or agreed to in writing, this
-    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-    CONDITIONS OF ANY KIND, either express or implied.
 */
 
 #include <sys/param.h>
@@ -37,15 +32,13 @@
 #include "config.h"
 #include "gcode.h"
 
-#define GCODE_TIMEOUT_MS 8000
 
 extern react_database react_datafiles[];
 extern react_database_info react_datafiles_info[];
 
 const char *TAG = "espbraille";
 
-static uint8_t gcodedata[128];
-static uint32_t last_activity = 0;
+static uint32_t _last_activity = 0;
 
 
 // ws tools
@@ -53,7 +46,7 @@ static uint32_t last_activity = 0;
  * async send function, which we put into the httpd work queue
  */
 
-struct async_resp_uart {
+struct async_resp_status {
     httpd_handle_t hd;
     int fd;
     char data[128];
@@ -73,24 +66,27 @@ static int cur_fd = -1;
 static void ws_async_send_uart(void *arg)
 {
     
-    struct async_resp_uart *resp_arg = arg;
+    struct async_resp_status *resp_arg = arg;
+    
     httpd_handle_t hd = resp_arg->hd;
     int fd = resp_arg->fd;
     httpd_ws_frame_t ws_pkt;
+    
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
     ws_pkt.payload = (uint8_t*)resp_arg->data;
     ws_pkt.len = resp_arg->size;
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
 
     httpd_ws_send_frame_async(hd, fd, &ws_pkt);
+
     free(resp_arg);
 }
 
 
 
-static esp_err_t trigger_async_uart(httpd_handle_t handle, int fd, uint8_t *data, size_t size)
+static esp_err_t trigger_async_status(httpd_handle_t handle, int fd, uint8_t *data, size_t size)
 {
-    struct async_resp_uart *resp_arg = malloc(sizeof(struct async_resp_uart));
+    struct async_resp_status *resp_arg = malloc(sizeof(struct async_resp_status));
     resp_arg->hd = handle;
     resp_arg->fd = fd;
     resp_arg->size = size > sizeof(resp_arg->data) ? sizeof(resp_arg->data) : size;
@@ -101,7 +97,7 @@ static esp_err_t trigger_async_uart(httpd_handle_t handle, int fd, uint8_t *data
 
 static esp_err_t trigger_async_qsize(httpd_handle_t handle, int fd, size_t queuesize)
 {
-    struct async_resp_uart *resp_arg = malloc(sizeof(struct async_resp_uart));
+    struct async_resp_status *resp_arg = malloc(sizeof(struct async_resp_status));
     resp_arg->hd = handle;
     resp_arg->fd = fd;
     resp_arg->size = snprintf (resp_arg->data, sizeof(resp_arg->data), "{\"free\":%u}", queuesize);
@@ -144,35 +140,41 @@ static esp_err_t root_get_handler(httpd_req_t *req)
 }
 
 
-
-
-
 static esp_err_t handle_ws_req(httpd_req_t *req)
 {
     if (req->method == HTTP_GET)
     {
         if (cur_fd == -1)
         {
-            ESP_LOGI(TAG, "WS handshake");
-            last_activity = xTaskGetTickCount ();
-            memset (gcodedata, 0, sizeof(gcodedata));
+            // start a new connection
+            cur_fd = httpd_req_to_sockfd(req);
+            ESP_LOGW(TAG, "WS handshake fd=%u", cur_fd);
+            _last_activity = xTaskGetTickCount ();
+            
             // clear queues
             gcode_reset ();
             return ESP_OK;
         }
         else
         {
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "CMD null value");
+            // there is a pending connection 
+            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Connexion in use");
             return (ESP_ERR_INVALID_STATE);
         }
         
     }
 
-    httpd_ws_frame_t ws_pkt;
-    uint8_t *buf = NULL;
+    if (cur_fd == -1)
+        return (ESP_ERR_INVALID_STATE);
+
+    uint8_t*            buf = NULL;
+    httpd_ws_frame_t    ws_pkt;
+    
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+
     esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
+
     if (ret != ESP_OK)
     {
         ESP_LOGE(TAG, "httpd_ws_recv_frame failed to get frame len with %d", ret);
@@ -198,7 +200,7 @@ static esp_err_t handle_ws_req(httpd_req_t *req)
         }
         
         ESP_LOGI(TAG, "Got packet with message:%u %d %s", gcode_get_free_size(), strlen((char*)ws_pkt.payload), ws_pkt.payload);
-        last_activity = xTaskGetTickCount ();
+        _last_activity = xTaskGetTickCount ();
         cJSON *root = cJSON_Parse((char *) ws_pkt.payload);
         if (root != NULL)
         {
@@ -213,7 +215,9 @@ static esp_err_t handle_ws_req(httpd_req_t *req)
                 gcode_enqueue (gcodecmd->valuestring, id);
 
                 // send queue size
-                trigger_async_qsize (req->handle, httpd_req_to_sockfd(req), gcode_get_free_size());
+                size_t qlen = gcode_get_free_size();
+                ESP_LOGI(TAG, "Sending status: free size=%u fd=%d", qlen, cur_fd);
+                trigger_async_qsize (req->handle, httpd_req_to_sockfd(req), qlen);
                 
             }
             else if (statuscmd != NULL)
@@ -344,7 +348,7 @@ void app_main(void)
 
     initialise_mdns();
 
-    last_activity = xTaskGetTickCount();
+    _last_activity = xTaskGetTickCount();
     while (server != NULL)
     {
         
@@ -365,7 +369,7 @@ void app_main(void)
                 ESP_LOGI(TAG, "Sending status:%s", buf);
 
                 if (size > 0)      
-                    trigger_async_uart (server, cur_fd, (uint8_t *)buf,  size);
+                    trigger_async_status (server, cur_fd, (uint8_t *)buf,  size);
                 else
                 {
                     ESP_LOGE(TAG, "Error sending status");
@@ -373,16 +377,17 @@ void app_main(void)
                 }
                 if (status.status == ERROR)
                 {
-                    ESP_LOGE(TAG, "Reset because sending ERROR");
+                    ESP_LOGE(TAG, "Reset socket because Status ERROR");
                     gcode_reset();
                     cur_fd = -1;
+                   
                 }
-                last_activity = xTaskGetTickCount ();
+                _last_activity = xTaskGetTickCount ();
             }
 
-            if (xTaskGetTickCount () - last_activity > pdMS_TO_TICKS(GCODE_TIMEOUT_MS))
+            if (xTaskGetTickCount () - _last_activity > pdMS_TO_TICKS(GCODE_TIMEOUT_MS) && cur_fd != -1)
             {
-                ESP_LOGE(TAG, "Error sending status");
+                ESP_LOGE(TAG, "Activity TIMEOUT - Reset socket");
                 gcode_reset ();
                 cur_fd = -1;
             }

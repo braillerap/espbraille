@@ -34,7 +34,8 @@ class TextInput extends React.Component {
           PrintedIdx:0,
           gcode:[],
           brailleinfo:[],
-          brailletbl:3
+          brailletbl:3,
+          laststatus:""
         };
         this.liblouis = new libLouis ();
         this.handleChange = this.handleChange.bind(this);
@@ -132,6 +133,7 @@ class TextInput extends React.Component {
         console.log(typeof(gcodelines));
         
         this.setState({gcode:gcodelines});
+        this.setState({laststatus:""});
     }
    
     handleprintws (event)
@@ -145,6 +147,7 @@ class TextInput extends React.Component {
 
         this.setState ({PrintIdx:0});
         this.setState ({PrintWSInProgress:true});
+        this.setState ({lastack:""});
 
         this.print_state = 0;
         this.realidx = 0;
@@ -204,8 +207,11 @@ class TextInput extends React.Component {
                 }
                 if (data.hasOwnProperty("status"))
                 {
+                    this.setState ({laststatus:data["status"]});
                     if (data["status"] === "ERROR")
+                    {
                         this.ws.close();
+                    }
                 }
                 
                 break;                    
@@ -356,6 +362,7 @@ class TextInput extends React.Component {
                 {this.render_braille_lang()}
                 <button onClick={this.handleprintws}>Print</button>
                 
+                <p>{this.state.laststatus}</p>
                 </>
             );
     }

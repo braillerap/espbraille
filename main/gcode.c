@@ -14,11 +14,11 @@
 #include "gcode.h"
 #include "config.h"
 
-#define GCODE_CMD_SIZE  128
-#define GCODE_QUEUE_ELM_NBR 64
-#define GCODE_QUEUE_STATUS_NBR  64
-#define GCODE_TIMEOUT_MS    5000
 
+#define GCODE_TIMEOUT_READ    250
+#define GCODE_TIMEOUT_WRITE    25
+
+const char* TAGE="espbraille.gcode";
 
 typedef struct {
     char            cmd[GCODE_CMD_SIZE];
@@ -81,14 +81,14 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
     
     // write cmd on uart
     set_status (pcmd->id, PENDING);
-    ESP_LOGI(TAG, "Write GCODE on UART%d:%s", UART, pcmd->cmd);
+    ESP_LOGI(TAGE, "Write GCODE on UART%d:%s", UART, pcmd->cmd);
     
     // clear RX fifo
     uart_flush(UART);
 
     // tx cmd
     uart_write_bytes(UART, pcmd->cmd, strlen(pcmd->cmd));
-    ESP_ERROR_CHECK(uart_wait_tx_done(UART, 5));
+    ESP_ERROR_CHECK(uart_wait_tx_done(UART, GCODE_TIMEOUT_WRITE));
     
     // wait for answer
     lastevent = xTaskGetTickCount ();
@@ -101,19 +101,20 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
         
         if (length > 0)
         {
-            //ESP_LOGI(TAG, "byte received %d %d", length, gcode_used);
+            //ESP_LOGI(TAGE, "byte received %d %d", length, gcode_used);
             length = uart_read_bytes(UART, &gcodedata[gcode_used], 
-                length > sizeof(gcodedata) - gcode_used ? sizeof(gcodedata) - gcode_used: length, pdMS_TO_TICKS(100));
+                length > sizeof(gcodedata) - gcode_used ? sizeof(gcodedata) - gcode_used : length, 
+                pdMS_TO_TICKS(GCODE_TIMEOUT_READ));
             gcode_used += length;
             gcodedata[gcode_used] = '\0';
 
             #if 0
             for (int i = 0; i < gcode_used; i++)
             {
-                ESP_LOGI(TAG, "buf[%d]=%x", i, gcodedata[i]);
+                ESP_LOGI(TAGE, "buf[%d]=%x", i, gcodedata[i]);
             }    
             
-            ESP_LOGI(TAG, "buf=%s", gcodedata);
+            ESP_LOGI(TAGE, "buf=%s", gcodedata);
             #endif
             lastevent = xTaskGetTickCount ();
         }
@@ -129,7 +130,7 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
                 pos = find - (char*) gcodedata;
             
             
-            //ESP_LOGI(TAG, "pos %d %x", pos, (unsigned int) find);
+            //ESP_LOGI(TAGE, "pos %d %x", pos, (unsigned int) find);
             if (pos < sizeof(gcodedata))
             {
                 gcodedata[pos] = '\0';
@@ -166,7 +167,7 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
 
         if (xTaskGetTickCount () - lastevent > pdMS_TO_TICKS(GCODE_TIMEOUT_MS))
         {
-            ESP_LOGI(TAG, "Signal TIMEOUT ERROR %lu ms elapsed", xTaskGetTickCount () - lastevent);
+            ESP_LOGI(TAGE, "Signal TIMEOUT ERROR %lu ms elapsed", ((xTaskGetTickCount () - lastevent) * configTICK_RATE_HZ) / 1000L );
             
             xQueueReset (gcode_queue);
             memset(gcodedata,0, sizeof(gcodedata));

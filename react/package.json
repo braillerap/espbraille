@@ -1,5 +1,5 @@
 {
-  "name": "mobiletest",
+  "name": "espbraillejs",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -24,7 +24,9 @@
       "react-app",
       "react-app/jest"
     ],
-    "ignorePatterns": ["src/liblouisreact.mjs"]
+    "ignorePatterns": [
+      "src/liblouisreact.mjs"
+    ]
   },
   "browserslist": {
     "production": [

@@ -1,6 +1,12 @@
 #ifndef __GCODE_H
 #define __GCODE_H
 
+#include "config.h"
+
+#define GCODE_CMD_SIZE          GCODE_STRING_SIZE
+#define GCODE_QUEUE_ELM_NBR     64
+#define GCODE_QUEUE_STATUS_NBR  64
+
 typedef enum
 {
     PENDING,

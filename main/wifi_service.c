@@ -214,7 +214,7 @@ static void wifi_init_softap(void)
     ESP_LOGI(TAG, "Set up softAP with IP: %s", ip_addr);
 
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:'%s' password:'%s'",
-             WIFI_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+             WIFI_ESP_WIFI_SSID, WIFI_ESP_WIFI_PASS);
 }
 
 void start_wifi(void)
