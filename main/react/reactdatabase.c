@@ -27,10 +27,10 @@ const extern uint8_t dat_logo512__png[];
 const extern size_t dat_logo512__png_size;
 const extern uint8_t dat_main__389c5937__css[];
 const extern size_t dat_main__389c5937__css_size;
-const extern uint8_t dat_main__7bb60419__js[];
-const extern size_t dat_main__7bb60419__js_size;
-const extern uint8_t dat_main__7bb60419__js__LICENSE__txt[];
-const extern size_t dat_main__7bb60419__js__LICENSE__txt_size;
+const extern uint8_t dat_main__d70949de__js[];
+const extern size_t dat_main__d70949de__js_size;
+const extern uint8_t dat_main__d70949de__js__LICENSE__txt[];
+const extern size_t dat_main__d70949de__js__LICENSE__txt_size;
 const extern uint8_t dat_manifest__json[];
 const extern size_t dat_manifest__json_size;
 const extern uint8_t dat_robots__txt[];
@@ -45,8 +45,8 @@ react_database react_datafiles[] = {
 	{ "logo192.png",dat_logo192__png, &dat_logo192__png_size },
 	{ "logo512.png",dat_logo512__png, &dat_logo512__png_size },
 	{ "main.389c5937.css",dat_main__389c5937__css, &dat_main__389c5937__css_size },
-	{ "main.7bb60419.js",dat_main__7bb60419__js, &dat_main__7bb60419__js_size },
-	{ "main.7bb60419.js.LICENSE.txt",dat_main__7bb60419__js__LICENSE__txt, &dat_main__7bb60419__js__LICENSE__txt_size },
+	{ "main.d70949de.js",dat_main__d70949de__js, &dat_main__d70949de__js_size },
+	{ "main.d70949de.js.LICENSE.txt",dat_main__d70949de__js__LICENSE__txt, &dat_main__d70949de__js__LICENSE__txt_size },
 	{ "manifest.json",dat_manifest__json, &dat_manifest__json_size },
 	{ "robots.txt",dat_robots__txt, &dat_robots__txt_size },
 };
@@ -62,8 +62,8 @@ react_database_info react_datafiles_info[] = {
 	{ "logo192.png","/logo192.png","image/png"  },
 	{ "logo512.png","/logo512.png","image/png"  },
 	{ "main.389c5937.css","/static/css/main.389c5937.css","text/css"  },
-	{ "main.7bb60419.js","/static/js/main.7bb60419.js","text/plain"  },
-	{ "main.7bb60419.js.LICENSE.txt","/static/js/main.7bb60419.js.LICENSE.txt","text/plain"  },
+	{ "main.d70949de.js","/static/js/main.d70949de.js","text/plain"  },
+	{ "main.d70949de.js.LICENSE.txt","/static/js/main.d70949de.js.LICENSE.txt","text/plain"  },
 	{ "manifest.json","/manifest.json","application/json"  },
 	{ "robots.txt","/robots.txt","text/plain"  },
 };

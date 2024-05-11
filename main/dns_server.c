@@ -171,7 +171,7 @@ void dns_server_task(void *pvParameters)
     int ip_protocol;
 
     while (1) {
-
+        ESP_LOGI(TAG, "Create Socket");
         struct sockaddr_in dest_addr;
         dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
         dest_addr.sin_family = AF_INET;

@@ -4,7 +4,7 @@
 #include "config.h"
 
 #define GCODE_CMD_SIZE          GCODE_STRING_SIZE
-#define GCODE_QUEUE_ELM_NBR     64
+#define GCODE_QUEUE_ELM_NBR     128
 #define GCODE_QUEUE_STATUS_NBR  64
 
 typedef enum
@@ -13,11 +13,12 @@ typedef enum
     OK,
     ERROR,
     UNKNOWN,
+    PING,
     STATUS_NBR
 } gcode_status;
 
 typedef struct {
-    uint32_t        id;
+    int32_t         id;
     gcode_status    status;
 } gcode_status_cmd;
 

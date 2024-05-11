@@ -89,7 +89,8 @@ static void wifi_event_handler_sta(void* arg, esp_event_base_t event_base,
         ESP_LOGI(TAG,"connect to the AP fail");
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+        //ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+        ESP_LOGI(TAG, "got ip:");
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
@@ -236,7 +237,7 @@ void start_wifi(void)
     esp_netif_create_default_wifi_ap();
     // Initialise ESP32 in SoftAP mode
     wifi_init_softap();
-    
+    ESP_LOGI(TAG, "Start DNS"); 
     // Start the DNS server that will redirect all queries to the softAP IP
     start_dns_server();
     #endif

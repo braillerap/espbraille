@@ -98,7 +98,10 @@ class TextInput extends React.Component {
         if (this.state.PrintWSInProgress &&
             performance.now () - this.lastws_event > 30000)
             if (this.ws)
-                this.ws.close ();
+                {
+                    console.log ("close in timeout Checktimeout");
+                    this.ws.close ();
+                }
     }
 
     
@@ -118,19 +121,18 @@ class TextInput extends React.Component {
         paginator.setrow(this.props.options.nbline);
         paginator.setSrcLines (Braille.getBrailleLines());
         paginator.Update();
-        console.log ("braille " + Braille.getBrailleLines().toString());
+        
         geom.setPaddingY (Braille.getLinePadding ());
         //console.log ("padding " + this.Braille.getLinePadding ());
         let ptcloud = geom.BraillePageToGeom(paginator.getPage(0), 1, 1);
-        console.log (paginator.getPage(0));
+        
         let gcoder = new GeomToGCode();
         gcoder.GeomToGCode(ptcloud);
         let gcode = gcoder.GetGcode();
 
         let gcodelines = gcode.split (/\r?\n/);
         gcodelines = gcodelines.slice(0,-1);
-        console.log (gcodelines);
-        console.log(typeof(gcodelines));
+       
         
         this.setState({gcode:gcodelines});
         this.setState({laststatus:""});
@@ -169,7 +171,9 @@ class TextInput extends React.Component {
 
     printws_automat (data)
     {
-        console.log(data)
+        
+        this.lastws_event = performance.now();
+        
         switch (this.print_state)
         {
             case 0:
@@ -180,18 +184,19 @@ class TextInput extends React.Component {
             case 1:
                 if (this.realidx >= this.state.gcode.length)
                 {
+                    console.log ("wait end of print");
                     this.print_state = 2;
                     this.setState({lastreq:"Wait end of print"});
                     break;
                 }
                 if (data.hasOwnProperty("free"))
                 {
-                    console.log (data["free"]);
+                    console.log ("property free :" + data["free"]);
                     if (data["free"] > 16)
                     {
                         // send gcode to device
                         let cmd = JSON.stringify ({cmd:this.state.gcode[this.realidx] +"\r\n", id:this.realidx})
-                        console.log (cmd);
+                        console.log ("sending gcode " + cmd);
                         this.ws.send(cmd);
 
                         // display status
@@ -202,14 +207,17 @@ class TextInput extends React.Component {
                 }
                 if (data.hasOwnProperty("id") && data.hasOwnProperty("status"))
                 {
+                    console.log ("next gcode");
                     this.setState ({PrintedIdx:data["id"]}); // next gcode
                     this.setState({lastack:data["status"]});
                 }
                 if (data.hasOwnProperty("status"))
                 {
+                    console.log ("receive status : " + JSON.stringify(data));
                     this.setState ({laststatus:data["status"]});
                     if (data["status"] === "ERROR")
                     {
+                        console.log ("close socker for status error:" + JSON.stringify(data));
                         this.ws.close();
                     }
                 }
@@ -220,22 +228,35 @@ class TextInput extends React.Component {
                 if (data.hasOwnProperty("id") && data.hasOwnProperty("status"))
                 {
                     this.setState ({PrintedIdx:data["id"]}); // next gcode
-                                        
+                    console.log ("received status:" + JSON.stringify(data));                    
                     if (data["id"] >= this.state.gcode.length -1)
                     {
-                        this.ws.close();
+                        this.setState ({laststatus:"End of print"});
+                        this.print_state = 3;
+                        let cmd = JSON.stringify ({ctrl:"end", id:this.state.gcode.length -1})
+                        console.log ("sending gcode " + cmd);
+                        this.ws.send(cmd);
+                        //
 
                     }
                     if (data.hasOwnProperty("status"))
                     {
-                        if (data["status"] === "ERROR")
+                        
+                        if (data["status"] === "ERROR"){
+                            console.log ("close socker for error:" + JSON.stringify(data));                    
                             this.ws.close();
+                        }
+                            
                     }
                     
                 }
 
                 
-                break;    
+                break;   
+                
+            case 3:
+                console.log ("close socket for id:" + data["id"] + " " + this.state.gcode.length -1);                    
+                this.ws.close();
         }
         
     }
@@ -243,20 +264,18 @@ class TextInput extends React.Component {
     {
         console.log ("sock connected")
               
-        this.ref.printws_automat("");
+        this.ref.printws_automat({"start":"starting"});
     }
     onmessagews (evt)
     {
         //console.log (evt.data)
         const message = evt.data;
-        console.log(message)
+        console.log("ws event " + message);
         performance.now();
         try{
             let data = JSON.parse(message);
-            
-            this.ref.printws_automat(data);
-
-            
+            console.log("printws_automat " + JSON.stringify(data));
+            this.ref.printws_automat(data);          
         } catch (error)
         {
             console.log (error);

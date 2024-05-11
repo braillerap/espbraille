@@ -40,11 +40,11 @@ class GeomToGCode
 	}
 
 	SetSpeed = function(speed) {
-		return 'G1 F' + speed + ';\r\n'
+		return 'G0 F' + speed + ';\r\n'
 	}
     
     MoveTo (X, Y) {
-		return 'G1' + this.gcodePosition(X, Y)
+		return 'G0' + this.gcodePosition(X, Y)
 	}
     PrintDot = function () {
 		let s = 'M3 S1;\r\n';

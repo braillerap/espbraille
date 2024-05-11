@@ -95,7 +95,7 @@ static esp_err_t trigger_async_status(httpd_handle_t handle, int fd, uint8_t *da
     return httpd_queue_work(handle, ws_async_send_uart, resp_arg);
 }
 
-static esp_err_t trigger_async_qsize(httpd_handle_t handle, int fd, size_t queuesize)
+static int trigger_async_qsize(httpd_handle_t handle, int fd, size_t queuesize)
 {
     struct async_resp_status *resp_arg = malloc(sizeof(struct async_resp_status));
     resp_arg->hd = handle;
@@ -206,30 +206,47 @@ static esp_err_t handle_ws_req(httpd_req_t *req)
         {
             cJSON* gcodecmd = cJSON_GetObjectItem(root, "cmd");
             cJSON* statuscmd = cJSON_GetObjectItem(root, "status");
+            cJSON* ctrlcmd = cJSON_GetObjectItem(root, "ctrl");
             cur_fd = httpd_req_to_sockfd(req);        
-            if (gcodecmd != NULL)
+            if (ctrlcmd != NULL)
+            {
+                ESP_LOGI(TAG, "CTRL request: '%s'", ctrlcmd->valuestring);
+                if (strcmp(ctrlcmd->valuestring, "end") == 0)
+                {
+                    //httpd_req_async_handler_complete (req);
+                    ESP_LOGI(TAG, "CLOSE request");
+                    cur_fd = -1;
+                    gcode_reset ();
+                }
+            }
+            else if (gcodecmd != NULL)
             {
                 int id = cJSON_GetObjectItem(root, "id")->valueint;
 
-                ESP_LOGI(TAG, "GCODE Received: '%s'", gcodecmd->valuestring);
+                ESP_LOGI(TAG, "GCODE request: '%s'", gcodecmd->valuestring);
                 gcode_enqueue (gcodecmd->valuestring, id);
 
                 // send queue size
                 size_t qlen = gcode_get_free_size();
-                ESP_LOGI(TAG, "Sending status: free size=%u fd=%d", qlen, cur_fd);
-                trigger_async_qsize (req->handle, httpd_req_to_sockfd(req), qlen);
                 
+                int ret = trigger_async_qsize (req->handle, httpd_req_to_sockfd(req), qlen);
+                ESP_LOGI(TAG, "Sending status: free size=%u fd=%d ret=%d", qlen, cur_fd, ret);
             }
             else if (statuscmd != NULL)
             {
-                ESP_LOGI(TAG, "STATUS Received: '%s'", statuscmd->valuestring);
+                ESP_LOGI(TAG, "STATUS request: '%s'", statuscmd->valuestring);
                 // send queue size
-                trigger_async_qsize (req->handle, httpd_req_to_sockfd(req), gcode_get_free_size());    
+                int ret = trigger_async_qsize (
+                    req->handle, 
+                    httpd_req_to_sockfd(req), 
+                    gcode_get_free_size());    
+                ESP_LOGI(TAG, "Sending status: fd=%d ret=%d", cur_fd, ret);
             }
             else
             {
                 /* 500 Internal Server Error */
                 httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "CMD null value");
+                ESP_LOGI(TAG, "Sending ERR500: fd=%d", cur_fd);
             }
             cJSON_Delete(root);
         }
@@ -337,8 +354,10 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
+    
     start_wifi ();
 
+    
     // start gcode processing queue
     gcode_init ();
 
@@ -347,12 +366,11 @@ void app_main(void)
     server = start_webserver();
 
     initialise_mdns();
+    
 
     _last_activity = xTaskGetTickCount();
     while (server != NULL)
     {
-        
-        
         if (cur_fd != -1)
         {
             gcode_status_cmd status;
@@ -380,12 +398,12 @@ void app_main(void)
                     ESP_LOGE(TAG, "Reset socket because Status ERROR");
                     gcode_reset();
                     cur_fd = -1;
-                   
                 }
                 _last_activity = xTaskGetTickCount ();
             }
 
-            if (xTaskGetTickCount () - _last_activity > pdMS_TO_TICKS(GCODE_TIMEOUT_MS) && cur_fd != -1)
+            if (xTaskGetTickCount () - _last_activity > pdMS_TO_TICKS(GCODE_TIMEOUT_MS) 
+                && cur_fd != -1)
             {
                 ESP_LOGE(TAG, "Activity TIMEOUT - Reset socket");
                 gcode_reset ();
@@ -395,7 +413,7 @@ void app_main(void)
 
         }
         else
-            vTaskDelay( pdMS_TO_TICKS(25));
+            vTaskDelay(pdMS_TO_TICKS(25));
         
     }
     
