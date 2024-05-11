@@ -13,7 +13,7 @@ typedef enum
     OK,
     ERROR,
     UNKNOWN,
-    PING,
+    CLOSE,
     STATUS_NBR
 } gcode_status;
 
@@ -25,6 +25,7 @@ typedef struct {
 
 void        gcode_init (void);
 void        gcode_reset (void);
+void        gcode_close (void);
 size_t      gcode_get_free_size (void);
 const char* gcode_get_status_string (gcode_status status);
 uint8_t     gcode_enqueue (char *strcmd, uint32_t cmd_id);

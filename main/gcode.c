@@ -17,6 +17,7 @@
 
 #define GCODE_TIMEOUT_READ    250
 #define GCODE_TIMEOUT_WRITE    25
+#define PENDING_STATUS_DELAY    500
 
 const char* TAGE="espbraille.gcode";
 
@@ -42,7 +43,7 @@ static StaticSemaphore_t _mutex_storage;
 static uint8_t gcodedata[GCODE_CMD_SIZE];
 static int16_t gcode_used = 0;
 static int32_t gcode_last_cmd_id = -1;
-static gcode_status gcode_last_status = PENDING;
+static gcode_status gcode_last_status = CLOSE;
 
 static int8_t set_status (int32_t cmd_id, gcode_status status)
 {
@@ -80,6 +81,7 @@ static int8_t signal_status (uint32_t cmd_id, gcode_status status)
 static gcode_status    send_gcode (gcode_cmd* pcmd)
 {
     uint32_t lastevent = xTaskGetTickCount ();
+    uint32_t last_pending = 0;
     
     // write cmd on uart
     set_status (pcmd->id, PENDING);
@@ -100,8 +102,17 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
     {
         int length = 0;
         ESP_ERROR_CHECK(uart_get_buffered_data_len(UART, (size_t*)&length));
-        
-        if (length > 0)
+        if (gcode_last_status == CLOSE)
+        {
+            if (length > 0)
+                length = uart_read_bytes(UART, &gcodedata[gcode_used], 
+                    length > sizeof(gcodedata) - gcode_used ? sizeof(gcodedata) - gcode_used : length, 
+                    pdMS_TO_TICKS(GCODE_TIMEOUT_READ));
+            gcode_used = 0;
+            gcodedata[gcode_used] = '\0';
+            break;
+        }
+        else if (length > 0)
         {
             ESP_LOGI(TAGE, "byte received %d %d", length, gcode_used);
             length = uart_read_bytes(UART, &gcodedata[gcode_used], 
@@ -109,15 +120,7 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
                 pdMS_TO_TICKS(GCODE_TIMEOUT_READ));
             gcode_used += length;
             gcodedata[gcode_used] = '\0';
-
-            #if 0
-            for (int i = 0; i < gcode_used; i++)
-            {
-                ESP_LOGI(TAGE, "buf[%d]=%x", i, gcodedata[i]);
-            }    
-            
-            ESP_LOGI(TAGE, "buf=%s", gcodedata);
-            #endif
+           
             lastevent = xTaskGetTickCount ();
         }
 
@@ -131,7 +134,7 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
             if (find != NULL)
                 pos = find - (char*) gcodedata;
             
-            
+            ESP_LOGI(TAGE, "buf %s", (char *) gcodedata);
             ESP_LOGI(TAGE, "pos %d %x", pos, (unsigned int) find);
             if (pos < sizeof(gcodedata))
             {
@@ -140,7 +143,7 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
                 {
                     // signal error
                     signal_status (pcmd->id, ERROR);
-                    ESP_LOGI(TAGE, "sending status %d %s", (int) pcmd->id, pcmd->cmd);
+                    ESP_LOGI(TAGE, "sending status ERROR %d %s", (int) pcmd->id, pcmd->cmd);
                     memmove (gcodedata, &gcodedata[pos + 1], gcode_used - pos - 1);
                     gcode_used -= (pos +1 );
                     break;
@@ -149,15 +152,19 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
                 {
                     // signal ok
                     signal_status (pcmd->id, OK);
-                    ESP_LOGI(TAGE, "sending status %d %s", (int) pcmd->id, pcmd->cmd);
+                    ESP_LOGI(TAGE, "sending status OK %d %s", (int) pcmd->id, pcmd->cmd);
                     memmove (gcodedata, &gcodedata[pos + 1], gcode_used - pos - 1);
                     gcode_used -= (pos +1 );
                     break;
                 }
                 else
                 {
-                    signal_status (pcmd->id, PENDING);
-                    ESP_LOGI(TAGE, "sending status %d %s", (int) pcmd->id, pcmd->cmd);
+                    if (xTaskGetTickCount () - last_pending > pdMS_TO_TICKS(PENDING_STATUS_DELAY))
+                    {
+                        signal_status (pcmd->id, PENDING);
+                        ESP_LOGI(TAGE, "sending status PENDING %d %s", (int) pcmd->id, pcmd->cmd);
+                        last_pending = xTaskGetTickCount ();
+                    }
                     memmove (gcodedata, &gcodedata[pos + 1], gcode_used - pos - 1);
                     gcode_used -= (pos +1 );
                 }
@@ -182,7 +189,7 @@ static gcode_status    send_gcode (gcode_cmd* pcmd)
             break;
         }
         else
-            vTaskDelay (pdMS_TO_TICKS(10));
+            vTaskDelay (pdMS_TO_TICKS(1));
     }
     return gcode_last_status;
 }
@@ -193,6 +200,14 @@ void gcode_reset (void)
     set_status (-1, PENDING);
     xQueueReset (gcode_queue);
     xQueueReset (gcode_queue_status);
+}
+void gcode_close (void)
+{
+    // reset gcode queue
+    set_status (-1, CLOSE);
+    xQueueReset (gcode_queue);
+    xQueueReset (gcode_queue_status);
+
 }
 
 
@@ -226,7 +241,8 @@ static const char* status_str[] = {
     "PENDING",
     "OK",
     "ERROR",
-    "UNKNOWN"
+    "UNKNOWN",
+    "CLOSE"
 };
 
 const char *gcode_get_status_string (gcode_status status)

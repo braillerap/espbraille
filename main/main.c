@@ -199,7 +199,7 @@ static esp_err_t handle_ws_req(httpd_req_t *req)
             return ret;
         }
         
-        ESP_LOGI(TAG, "Got packet with message:%u %d %s", gcode_get_free_size(), strlen((char*)ws_pkt.payload), ws_pkt.payload);
+        //ESP_LOGI(TAG, "Got packet with message:%u %d %s", gcode_get_free_size(), strlen((char*)ws_pkt.payload), ws_pkt.payload);
         _last_activity = xTaskGetTickCount ();
         cJSON *root = cJSON_Parse((char *) ws_pkt.payload);
         if (root != NULL)
@@ -216,21 +216,21 @@ static esp_err_t handle_ws_req(httpd_req_t *req)
                     //httpd_req_async_handler_complete (req);
                     ESP_LOGI(TAG, "CLOSE request");
                     cur_fd = -1;
-                    gcode_reset ();
+                    gcode_close ();
                 }
             }
             else if (gcodecmd != NULL)
             {
                 int id = cJSON_GetObjectItem(root, "id")->valueint;
 
-                ESP_LOGI(TAG, "GCODE request: '%s'", gcodecmd->valuestring);
+                //ESP_LOGI(TAG, "GCODE request: '%s'", gcodecmd->valuestring);
                 gcode_enqueue (gcodecmd->valuestring, id);
 
                 // send queue size
                 size_t qlen = gcode_get_free_size();
                 
                 int ret = trigger_async_qsize (req->handle, httpd_req_to_sockfd(req), qlen);
-                ESP_LOGI(TAG, "Sending status: free size=%u fd=%d ret=%d", qlen, cur_fd, ret);
+                //ESP_LOGI(TAG, "Sending status: free size=%u fd=%d ret=%d", qlen, cur_fd, ret);
             }
             else if (statuscmd != NULL)
             {
@@ -277,7 +277,7 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
 {
     if (req->method == HTTP_OPTIONS)
     {
-        ESP_LOGI(TAG, "Options request:%s", req->uri);    
+        //ESP_LOGI(TAG, "Options request:%s", req->uri);    
         ESP_ERROR_CHECK(httpd_resp_set_hdr (req, "Access-Control-Allow-Origin", "*"));
         ESP_ERROR_CHECK(httpd_resp_set_hdr (req, "Access-Control-Allow-Methods", "GET, POST"));
         ESP_ERROR_CHECK(httpd_resp_set_hdr (req, "Access-Control-Allow-Headers", "Content-Type, origin"));
