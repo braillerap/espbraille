@@ -195,6 +195,7 @@ void gcode_reset (void)
     xQueueReset (gcode_queue_status);
 }
 
+
 uint32_t get_last_cmd (void)
 {
     uint32_t last = (uint32_t) 0xFFFFFFFF;
