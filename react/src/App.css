@@ -66,6 +66,10 @@ select
 .App-link {
   color: #61dafb;
 }
+nav {
+  align-items: right !important;
+  text-align: right;
+}
 
 @keyframes App-logo-spin {
   from {

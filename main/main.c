@@ -284,6 +284,7 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
         httpd_resp_sendstr(req, "OPTIONS answer");
         return ESP_OK;
     }
+    
     // Set status
     httpd_resp_set_status(req, "302 Temporary Redirect");
     // Redirect to the "/" root directory
@@ -292,6 +293,7 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
     httpd_resp_send(req, "Redirect to the captive portal", HTTPD_RESP_USE_STRLEN);
 
     ESP_LOGI(TAG, "404 Redirecting to root from:%s", req->uri);
+    
     return ESP_OK;
 }
 

@@ -1,12 +1,13 @@
 import React from 'react';
+import { Link } from "react-router-dom";
+import waitanim from './833.gif'
 import BrailleTranslatorFactory from '../modules/BrailleTranslatorFactory';
 import BraillePaginator from '../modules/BraillePaginator';
 import BrailleToGeometry from '../modules/BrailleToGeometry';
 import GeomToGCode from '../modules/GeomToGCode';
-import waitanim from './833.gif'
 import libLouis from '../WrapLibLouisReact';
 import createModule from "../liblouisreact.mjs"; // eslint-disable-line
-
+import menulogo from '../menu.svg'
 import '../App.css';
 
 function  braille_info (fname, desc, lang, region, flags) {
@@ -35,7 +36,8 @@ class TextInput extends React.Component {
           gcode:[],
           brailleinfo:[],
           brailletbl:3,
-          laststatus:""
+          laststatus:"",
+          param:false
         };
         this.liblouis = new libLouis ();
         this.handleChange = this.handleChange.bind(this);
@@ -44,7 +46,8 @@ class TextInput extends React.Component {
         this.printws_automat = this.printws_automat.bind(this);
         this.CheckTimeout = this.CheckTimeout.bind (this);
         this.handleChangeBraille = this.handleChangeBraille.bind(this);
-        
+        this.handleClikParam = this.handleClikParam.bind(this);
+
         this.onopenws = this.onopenws.bind(this);
         this.onmessagews = this.onmessagews.bind(this);
         this.onclosews = this.onclosews.bind(this);
@@ -159,19 +162,21 @@ class TextInput extends React.Component {
         if (this.state.PrintWSInProgress)
             return;
 
-        console.log (this.state.txt);
-        
+        // trasnlate text to Braille an build gcode
         this.buildgcode();
 
+        // initialized printing
         this.setState ({PrintIdx:0});
         this.setState ({PrintWSInProgress:true});
         this.setState ({lastack:""});
 
         this.print_state = 0;
         this.realidx = 0;
+
+        // connect websocket to send gcode
         this.ws = new WebSocket("ws://" + window.location.host + "/ws");
         
-        //this.ws = new WebSocket("ws://esp32web.local/ws");
+        
         this.ws.ref = this;
         this.ws.onopen = this.onopenws;
         this.ws.onmessage = this.onmessagews;
@@ -179,11 +184,10 @@ class TextInput extends React.Component {
         this.lastws_event = performance.now();
         this.lastws_check =performance.now ();
 
+        // init timer for periodic check
         this.timer = setInterval(() => {
             this.CheckTimeout();
           }, 500);
-        
-        
     }
 
     printws_automat (data)
@@ -326,6 +330,36 @@ class TextInput extends React.Component {
       
         this.setState({brailletbl:event.target.value});  
     }
+    handleClikParam (event)
+    {
+        event.preventDefault();
+        
+        
+        let state = this.state.param;
+        if  (state)
+            this.setState({param:false});
+        else
+            this.setState({param:true});
+        
+    }
+    render_print_button ()
+    {
+        if (this.state.brailleinfo.length === 0)
+        {
+            return (
+                <div className='imgcontainer'>
+                    <p aria-hidden='true'>Loading ... </p>
+                    <img className='imgload'  src={waitanim} alt="" />
+                </div>
+            );
+        }
+        else
+        {
+            return (
+            <button onClick={this.handleprintws}>Print</button>
+            );
+        }
+    }
     render_braille_lang ()
     {
       if (this.state.brailleinfo.length === 0)
@@ -382,11 +416,33 @@ class TextInput extends React.Component {
                 </> 
             );       
         }
-        
+        else if (this.state.param)
+        {
+            return (
+                <>
+                <h1>Paramètres</h1>
+                <nav>
+                    <button 
+                        onClick={this.handleClikParam}>
+
+                    <img src={menulogo} className="menu" alt="menu" />
+                    </button>
+                </nav>
+                {this.render_braille_lang()}
+
+                </>
+            );
+        }
         else
             return (
                 <>
                 <h1>BrailleRAP</h1>
+                <nav>
+                <button onClick={this.handleClikParam}>
+                    <img src={menulogo} className="menu" alt="menu" />
+                </button>
+
+                </nav>
             <textarea  
                         value={this.state.txt} 
                         onChange={this.handleChange} 
@@ -394,8 +450,8 @@ class TextInput extends React.Component {
                         cols={ncols} 
                         
                         >{this.state.txt}</textarea>
-                {this.render_braille_lang()}
-                <button onClick={this.handleprintws}>Print</button>
+                
+                {this.render_print_button()}
                 
                 <p>{this.state.laststatus}</p>
                 </>

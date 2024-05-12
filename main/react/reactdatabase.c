@@ -25,14 +25,16 @@ const extern uint8_t dat_logo192__png[];
 const extern size_t dat_logo192__png_size;
 const extern uint8_t dat_logo512__png[];
 const extern size_t dat_logo512__png_size;
-const extern uint8_t dat_main__389c5937__css[];
-const extern size_t dat_main__389c5937__css_size;
-const extern uint8_t dat_main__471b5465__js[];
-const extern size_t dat_main__471b5465__js_size;
-const extern uint8_t dat_main__471b5465__js__LICENSE__txt[];
-const extern size_t dat_main__471b5465__js__LICENSE__txt_size;
+const extern uint8_t dat_main__b5e12546__js[];
+const extern size_t dat_main__b5e12546__js_size;
+const extern uint8_t dat_main__b5e12546__js__LICENSE__txt[];
+const extern size_t dat_main__b5e12546__js__LICENSE__txt_size;
+const extern uint8_t dat_main__ec9eda20__css[];
+const extern size_t dat_main__ec9eda20__css_size;
 const extern uint8_t dat_manifest__json[];
 const extern size_t dat_manifest__json_size;
+const extern uint8_t dat_menu__656139ed5f82ae7399a92f8c1a89bfb9__svg[];
+const extern size_t dat_menu__656139ed5f82ae7399a92f8c1a89bfb9__svg_size;
 const extern uint8_t dat_robots__txt[];
 const extern size_t dat_robots__txt_size;
 react_database react_datafiles[] = {
@@ -44,10 +46,11 @@ react_database react_datafiles[] = {
 	{ "liblouisreact.wasm",dat_liblouisreact__wasm, &dat_liblouisreact__wasm_size },
 	{ "logo192.png",dat_logo192__png, &dat_logo192__png_size },
 	{ "logo512.png",dat_logo512__png, &dat_logo512__png_size },
-	{ "main.389c5937.css",dat_main__389c5937__css, &dat_main__389c5937__css_size },
-	{ "main.471b5465.js",dat_main__471b5465__js, &dat_main__471b5465__js_size },
-	{ "main.471b5465.js.LICENSE.txt",dat_main__471b5465__js__LICENSE__txt, &dat_main__471b5465__js__LICENSE__txt_size },
+	{ "main.b5e12546.js",dat_main__b5e12546__js, &dat_main__b5e12546__js_size },
+	{ "main.b5e12546.js.LICENSE.txt",dat_main__b5e12546__js__LICENSE__txt, &dat_main__b5e12546__js__LICENSE__txt_size },
+	{ "main.ec9eda20.css",dat_main__ec9eda20__css, &dat_main__ec9eda20__css_size },
 	{ "manifest.json",dat_manifest__json, &dat_manifest__json_size },
+	{ "menu.656139ed5f82ae7399a92f8c1a89bfb9.svg",dat_menu__656139ed5f82ae7399a92f8c1a89bfb9__svg, &dat_menu__656139ed5f82ae7399a92f8c1a89bfb9__svg_size },
 	{ "robots.txt",dat_robots__txt, &dat_robots__txt_size },
 };
 
@@ -61,10 +64,11 @@ react_database_info react_datafiles_info[] = {
 	{ "liblouisreact.wasm","/liblouisreact.wasm","application/wasm"  },
 	{ "logo192.png","/logo192.png","image/png"  },
 	{ "logo512.png","/logo512.png","image/png"  },
-	{ "main.389c5937.css","/static/css/main.389c5937.css","text/css"  },
-	{ "main.471b5465.js","/static/js/main.471b5465.js","text/plain"  },
-	{ "main.471b5465.js.LICENSE.txt","/static/js/main.471b5465.js.LICENSE.txt","text/plain"  },
+	{ "main.b5e12546.js","/static/js/main.b5e12546.js","text/plain"  },
+	{ "main.b5e12546.js.LICENSE.txt","/static/js/main.b5e12546.js.LICENSE.txt","text/plain"  },
+	{ "main.ec9eda20.css","/static/css/main.ec9eda20.css","text/css"  },
 	{ "manifest.json","/manifest.json","application/json"  },
+	{ "menu.656139ed5f82ae7399a92f8c1a89bfb9.svg","/static/media/menu.656139ed5f82ae7399a92f8c1a89bfb9.svg","image/svg+xml"  },
 	{ "robots.txt","/robots.txt","text/plain"  },
 };
 

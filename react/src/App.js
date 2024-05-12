@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AppOption from "./pages/components/AppOption";
 import TextInput from "./pages/textinput";
 import Layout from './Layout'
-
+import Param from './pages/Param'
 
 import './App.css';
 
@@ -58,9 +58,9 @@ class App extends Component {
     return (
       <BrowserRouter>
       <Routes >
-        <Route path="/" element={<Layout />}>
+          <Route path="/" element={<Layout />}>
           <Route index element={<TextInput src={this.state.srctxt} textcb={this.SetText} options={this.state.options} /> } />
-         
+          <Route path="/param" element={<Param/>} />
           <Route path="*" element={<TextInput  src={this.state.srctxt} textcb={this.SetText} options={this.state.options}/>} />
         </Route>
       </Routes>

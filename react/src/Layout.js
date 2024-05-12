@@ -10,16 +10,11 @@ class Layout extends Component
   render ()
   {
     return (
-        <div className="App">
-        <header className="App-header">
-            
-            
-            <Outlet />
-
-            
-        </header>  
-            
+      <div className="App">
+        <div className="App-header">
+          <Outlet />
         </div>
+      </div>
     );
   }
 }
