@@ -37,7 +37,9 @@ class TextInput extends React.Component {
           brailleinfo:[],
           brailletbl:3,
           laststatus:"",
-          param:false
+          param:false,
+          nbcol:this.props.options.nbcol,
+          nbline:this.props.options.nbline,
         };
         this.liblouis = new libLouis ();
         this.handleChange = this.handleChange.bind(this);
@@ -47,6 +49,8 @@ class TextInput extends React.Component {
         this.CheckTimeout = this.CheckTimeout.bind (this);
         this.handleChangeBraille = this.handleChangeBraille.bind(this);
         this.handleClikParam = this.handleClikParam.bind(this);
+        this.handleChangeNbCol = this.handleChangeNbCol.bind(this);
+        this.handleChangeNbLine = this.handleChangeNbLine.bind(this);
 
         this.onopenws = this.onopenws.bind(this);
         this.onmessagews = this.onmessagews.bind(this);
@@ -330,6 +334,14 @@ class TextInput extends React.Component {
       
         this.setState({brailletbl:event.target.value});  
     }
+    handleChangeNbCol (event)
+    {
+        this.setState({nbcol:event.target.value});
+    }
+    handleChangeNbLine (event)
+    {
+        this.setState({nbline:event.target.value});
+    }
     handleClikParam (event)
     {
         event.preventDefault();
@@ -403,8 +415,8 @@ class TextInput extends React.Component {
     }
     render ()
     {
-        const ncols = parseInt(this.props.options.nbcol);
-        const nlines = parseInt(this.props.options.nbline);
+        const ncols = parseInt(this.state.nbcol);
+        const nlines = parseInt(this.state.nbline);
         if (this.state.PrintWSInProgress)
         {
             return (
@@ -422,14 +434,45 @@ class TextInput extends React.Component {
                 <>
                 <h1>Paramètres</h1>
                 <nav>
-                    <button 
+                    <button aria-label="page principale"
                         onClick={this.handleClikParam}>
 
-                    <img src={menulogo} className="menu" alt="menu" />
+                    <img aria-hidden={true} src={menulogo}  className="menu" alt="menu" />
                     </button>
                 </nav>
                 {this.render_braille_lang()}
-
+                <div className="pure-control-group">
+                  <label  htmlFor='nbcol' aria-label="Nombre de charactères par ligne">
+                  Nombre de caractères par ligne
+                  </label>
+                    <input type="number" 
+                      aria-label="Nombre de caractères par ligne" 
+                      className="input"
+                      step="1" min="5" max="35" name="nbcol" id="nbcol"
+                      value={this.state.nbcol} 
+                      onChange={this.handleChangeNbCol} 
+                    />
+                </div>
+                <div className="pure-control-group">
+                  <label  
+                    aria-label="Nombre de lignes par page" 
+                    htmlFor='nbline'>
+                    Nombre de lignes par page
+                    
+                  </label> 
+                  <input  
+                    aria-label="Nombre de lignes par page"
+                    type="number" 
+                    step="1" 
+                    min="5" 
+                    max="35" 
+                    name="nbline" 
+                    id="nbline" 
+                    value={this.state.nbline} 
+                    onChange={this.handleChangeNbLine} 
+                    className='input'
+                  />
+                </div>
                 </>
             );
         }
